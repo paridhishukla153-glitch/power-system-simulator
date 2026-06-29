@@ -1,47 +1,66 @@
-from core.bus import Bus
-from core.line import Line
-from core.generator import Generator
+from core.ybus import YBusBuilder
+from core.nr_solver import NewtonRaphsonSolver
+from visualization.network_plot import plot_network
+from data.ieee5 import get_system
+from utils.export_results import export_bus_results
 
 
-bus1 = Bus(
-    bus_id=1,
-    bus_type="Slack",
-    voltage=1.06
+# Load IEEE 3 Bus System
+buses, lines = get_system()
+
+
+# Build Y-Bus Matrix
+builder = YBusBuilder(
+    buses,
+    lines
 )
 
-bus2 = Bus(
-    bus_id=2,
-    bus_type="PQ",
-    p_load=1.0,
-    q_load=0.5
+ybus = builder.build()
+
+
+# Initialize Newton-Raphson Solver
+solver = NewtonRaphsonSolver(
+    buses,
+    ybus
 )
 
-line12 = Line(
-    from_bus=1,
-    to_bus=2,
-    resistance=0.02,
-    reactance=0.06
+
+# Calculate Active and Reactive Power
+P, Q = solver.calculate_power()
+
+print("Active Power:")
+print(P)
+
+print()
+
+print("Reactive Power:")
+print(Q)
+
+print()
+
+
+# Calculate Mismatch Vector
+mismatch = solver.calculate_mismatch()
+
+print("Mismatch Vector:")
+print(mismatch)
+
+print()
+
+
+# Build Jacobian Matrix
+J = solver.build_jacobian()
+
+print("Jacobian Matrix:")
+print(J)
+
+print()
+
+
+# Visualize Network
+plot_network(
+    buses,
+    lines
 )
 
-gen1 = Generator(
-    gen_id=1,
-    bus_id=1,
-    p_output=1.5
-)
-
-print(bus1)
-print(bus2)
-
-print(line12)
-
-print(gen1)
-
-print(
-    "Line impedance:",
-    line12.impedance()
-)
-
-print(
-    "Line admittance:",
-    line12.admittance()
-)
+export_bus_results(buses)
